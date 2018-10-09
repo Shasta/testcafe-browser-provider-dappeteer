@@ -1,0 +1,15 @@
+{
+  "name": "e2e-tests",
+  "version": "1.3.2",
+  "description": "e2e tests",
+  "main": "test.js",
+  "scripts": {
+    "test": "npm install && testcafe puppeteer:no_sandbox test.js -s ./"
+  },
+  "author": "jacek@dobosz.at",
+  "license": "ISC",
+  "devDependencies": {
+    "testcafe": "^0.20.2",
+    "testcafe-browser-provider-puppeteer": "*"
+  }
+}
