@@ -1,14 +1,13 @@
-# testcafe-browser-provider-puppeteer
-[![Build Status](https://travis-ci.org/jdobosz/testcafe-browser-provider-puppeteer.svg)](https://travis-ci.org/jdobosz/testcafe-browser-provider-puppeteer)
-[![npm version](https://badge.fury.io/js/testcafe-browser-provider-puppeteer.svg)](https://badge.fury.io/js/testcafe-browser-provider-puppeteer)
+# testcafe-browser-provider-dappeteer
+Testcafe browser provider for decentraland/dappmeteer. E2E testing with Puppeteer and Metamask chrome extenstion, using Testcafé.
 
-This is the [puppeteer](https://github.com/GoogleChrome/puppeteer)/chromium browser provider plugin for [TestCafe](http://devexpress.github.io/testcafe).
-It allows to run tastcafe e2e tests headless in CI pipeline without any external dependency like xvfb, since everything what is needed is installed via npm.
+This is the [dappmeteer](https://github.com/decentraland/dappmeteer) chromium browser provider, with Metamask extension, for [TestCafe](http://devexpress.github.io/testcafe).
+
 
 ## Install
 
 ```
-npm install --save-dev testcafe-browser-provider-puppeteer
+npm install --save-dev testcafe-browser-provider-dappmeteer
 ```
 
 ## Usage
@@ -17,7 +16,8 @@ npm install --save-dev testcafe-browser-provider-puppeteer
 When you run tests from the command line, use the provider name when specifying browsers:
 
 ```
-testcafe puppeteer 'path/to/test/file.js'
+For how to interact with the dappmeteer Metamask, check the Dappmeteer readme. 
+testcafe dappmeteer 'path/to/test/file.js'
 ```
 
 
@@ -27,20 +27,50 @@ When you use API, pass the provider name to the `browsers()` method:
 testCafe
     .createRunner()
     .src('path/to/test/file.js')
-    .browsers('puppeteer')
+    .browsers('dappmeteer')
     .run();
 ```
 
-## Troubleshooting
+## How to get the Metamask instance to tinteract at Testcafe tests
 
-On same older linux distributions, fails chromium due to sandbox issues - see [this](https://github.com/GoogleChrome/puppeteer/blob/master/docs/troubleshooting.md#chrome-headless-fails-due-to-sandbox-issues).
+For a deep understand about the API of the mestamask instance check check the [Dappeteer docs](https://github.com/decentraland/dappmeteer).
 
-You can try in such case running the plugin without sandbox restriction
+You need to pass the testcafe instance as argument to the `getMetamask` function from this testcafe provider, and it will return a promise, once resolved you will have an object that allows you to interact with Metamask.
 
- ```
-testcafe puppeteer:no_sandbox 'path/to/test/file.js'
+Example with localhost/private Ethereum blockchain and Testcafe:
 
 ```
+import { Selector } from 'testcafe'; 
+import { getMetamask } from 'testcafe-browser-provider-dappeteer';
 
-## Author
-Jacek Dobosz
+const default_mmemo = 'stumble story behind hurt patient ball whisper art swift tongue ice alien';
+
+fixture `Sign up page`
+    .page `http://localhost:3000`
+    .beforeEach(async t => {
+      const metamask = await getMetamask(t);
+      try {
+        await metamask.lock()  // If user is not created, it will throw here, creating a new imported seed account
+        console.log("Unlocking account...")
+        await metamask.unlock();
+      } catch (_error) {
+        console.log("Creating an account...")
+        // Import default mmemonic
+        await metamask.importAccount(default_mmemo);
+      }
+      // Change network to private blockchain
+      await metamask.switchNetwork('localhost 8545');
+    });
+
+
+test('Mint test tokens', async t => {
+  const metamask = await getMetamaskInstance(t);
+  const mintButton = await Selector('#mint');
+  
+  // Click to mint tokens
+  await mintButton.click();
+
+  // Click to confirm transaction at Metamask
+  await metamask.confirmTransaction();
+});
+```
